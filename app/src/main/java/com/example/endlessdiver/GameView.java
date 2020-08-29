@@ -3,7 +3,6 @@ package com.example.endlessdiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
@@ -22,6 +21,16 @@ public class GameView extends SurfaceView implements Runnable {
     private Paint paint;
     private SharedPreferences prefs;
     private GameActivity activity;
+
+    LightSensor lightSensor;
+    ProximitySensor proximitySensor;
+    Magnometer magnometer;
+    Accelerometer accelerometer;
+
+    float lightSensorValue = 0;
+    float proximitySensorValue = -1;
+    float magnometerValue = 0;
+    float accelerometerValue = 0;
 
     private boolean isPlaying = true, isGameOver = false;
     private int screenX, screenY;
@@ -49,6 +58,11 @@ public class GameView extends SurfaceView implements Runnable {
         paint.setTextSize(128);
         paint.setColor(Color.WHITE);
         prefs = activity.getSharedPreferences("game", Context.MODE_PRIVATE);
+
+        lightSensor = new LightSensor(activity);
+        proximitySensor = new ProximitySensor(activity);
+        magnometer = new Magnometer(activity);
+        accelerometer = new Accelerometer(activity);
 
         this.screenX = screenX;
         this.screenY = screenY;
@@ -78,6 +92,7 @@ public class GameView extends SurfaceView implements Runnable {
     }
 
     private void update() {
+        getSensorsValues();
         manageBackground();
         manageDiver();
         manageBullets();
@@ -134,8 +149,7 @@ public class GameView extends SurfaceView implements Runnable {
 
     private void drawBackgrounds(Canvas canvas) {
 
-        // to be cahnged to check value from light sensor
-        if (score < 10)
+        if (lightSensorValue < 1000)
         {
             if (background0.y < screenY) {
                 canvas.drawBitmap(background0.background_start, background0.x, background0.y, paint);
@@ -154,8 +168,7 @@ public class GameView extends SurfaceView implements Runnable {
 
     private void drawGameObjects(Canvas canvas) {
         for (Enemy enemy : enemies) {
-            // to be changed to check proximity
-            if (!(score > 5 && score < 10)) canvas.drawBitmap(enemy.getEnemy(), enemy.x, enemy.y, paint);
+            if (proximitySensorValue != 0) canvas.drawBitmap(enemy.getEnemy(), enemy.x, enemy.y, paint);
             else canvas.drawBitmap(enemy.enemySafe, enemy.x, enemy.y, paint);
         }
 
@@ -168,6 +181,7 @@ public class GameView extends SurfaceView implements Runnable {
         }
 
         canvas.drawText(score + "", screenX/2f, 164, paint);
+        canvas.drawText("" + magnometerValue, screenX/2f, 300, paint);
     }
 
     private void drawDiver(Canvas canvas, boolean isDead) {
@@ -175,32 +189,33 @@ public class GameView extends SurfaceView implements Runnable {
         else canvas.drawBitmap(diver.getDiver(), diver.x, diver.y, paint);
     }
 
-    // to be changed with accelerometer
-    @Override
-    public boolean onTouchEvent(MotionEvent event) {
-
-        switch (event.getAction()) {
-            case MotionEvent.ACTION_DOWN:
-                if (event.getX() < screenX/2) {
-                    diver.isGoingLeft = true;
-                    diver.isGoingRight = false;
-                } else if (event.getX() > screenX/2) {
-                    diver.isGoingLeft = false;
-                    diver.isGoingRight = true;
-                    // to be changed with magnetometer
-                    //diver.isShooting = true;
-                }
-                break;
-            case MotionEvent.ACTION_UP:
-                    diver.isGoingLeft = false;
-                    diver.isGoingRight = false;
-                    // to change
-                    //diver.isShooting = false;
-                    //
-                break;
-        }
-        return true;
-    }
+    //old movement
+//    // to be changed with accelerometer
+//    @Override
+//    public boolean onTouchEvent(MotionEvent event) {
+//
+//        switch (event.getAction()) {
+//            case MotionEvent.ACTION_DOWN:
+//                if (event.getX() < screenX/2) {
+//                    diver.isGoingLeft = true;
+//                    diver.isGoingRight = false;
+//                } else if (event.getX() > screenX/2) {
+//                    diver.isGoingLeft = false;
+//                    diver.isGoingRight = true;
+//                    // to be changed with magnetometer
+//                    //diver.isShooting = true;
+//                }
+//                break;
+//            case MotionEvent.ACTION_UP:
+//                    diver.isGoingLeft = false;
+//                    diver.isGoingRight = false;
+//                    // to change
+//                    //diver.isShooting = false;
+//                    //
+//                break;
+//        }
+//        return true;
+//    }
 
     public void newBullet() {
         Bullet bullet = new Bullet(getResources());
@@ -242,6 +257,18 @@ public class GameView extends SurfaceView implements Runnable {
     }
 
     private void manageDiver() {
+
+        if (accelerometerValue < -0.2) {
+            diver.isGoingLeft = true;
+            diver.isGoingRight = false;
+        } else if (accelerometerValue > 0.2) {
+            diver.isGoingLeft = false;
+            diver.isGoingRight = true;
+        } else {
+            diver.isGoingLeft = false;
+            diver.isGoingRight = false;
+        }
+
         if (diver.isGoingLeft) diver.x -= diverVelocity;
         else if (diver.isGoingRight) diver.x += diverVelocity;
 
@@ -253,9 +280,8 @@ public class GameView extends SurfaceView implements Runnable {
             diver.x = screenX - diver.width;
         }
 
-        // to be changed to check value from magnetometer
-        if (score > 20) diver.isShooting = true;
-        if (score > 25) diver.isShooting = false;
+        if (magnometerValue > 60) diver.isShooting = true;
+        else diver.isShooting = false;
     }
 
     private void manageBullets() {
@@ -266,8 +292,7 @@ public class GameView extends SurfaceView implements Runnable {
             bullet.y -= bulletVelocity;
 
             for (Enemy enemy : enemies) {
-                // to be changed to check proximity
-                if (!(score > 5 && score < 10)) {
+                if (proximitySensorValue != 0) {
                     if (Rect.intersects(enemy.getCollisionShape(), bullet.getCollisionShape())) {
                         enemy.y = screenY + 500;
                         bullet.y = -500;
@@ -294,8 +319,7 @@ public class GameView extends SurfaceView implements Runnable {
 
             if (Rect.intersects(enemy.getCollisionShape(), diver.getCollisionShape()))
             {
-                // to be changed to check proximity
-                if (score > 5 && score < 10)
+                if (proximitySensorValue == 0)
                 {
                     enemy.y = screenY + 500;
                     score ++;
@@ -350,5 +374,12 @@ public class GameView extends SurfaceView implements Runnable {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
+    }
+
+    private void getSensorsValues() {
+        lightSensorValue = lightSensor.getValue();
+        proximitySensorValue = proximitySensor.getValue();
+        magnometerValue = magnometer.getValue();
+        accelerometerValue = accelerometer.getValue();
     }
 }
