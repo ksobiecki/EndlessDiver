@@ -1,0 +1,2 @@
+rootProject.name='EndlessDiver'
+include ':app'
