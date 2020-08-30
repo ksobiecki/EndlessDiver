@@ -13,7 +13,7 @@ public class Background {
         background = BitmapFactory.decodeResource(res, R.drawable.background);
         background = Bitmap.createScaledBitmap(background, screenX, screenY, false);
 
-        background_start = BitmapFactory.decodeResource(res, R.drawable.background_start);
+        background_start = BitmapFactory.decodeResource(res, R.drawable.background_dark_start);
         background_start = Bitmap.createScaledBitmap(background_start, screenX, screenY, false);
 
         background_dark = BitmapFactory.decodeResource(res, R.drawable.background_dark);

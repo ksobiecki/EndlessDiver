@@ -6,12 +6,12 @@ import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 
-public class ProximitySensor implements SensorEventListener {
+public class Proximity implements SensorEventListener {
 
     private SensorManager sensorManager;
     private float proximitySensorValue;
 
-    ProximitySensor(Context context) {
+    Proximity(Context context) {
         sensorManager = (SensorManager) context.getSystemService(Context.SENSOR_SERVICE);
         sensorManager.registerListener(this, sensorManager.getDefaultSensor(Sensor.TYPE_PROXIMITY), SensorManager.SENSOR_DELAY_NORMAL);
     }

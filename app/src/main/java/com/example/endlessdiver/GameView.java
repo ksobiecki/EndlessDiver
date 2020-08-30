@@ -7,7 +7,6 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Rect;
-import android.view.MotionEvent;
 import android.view.SurfaceView;
 
 import java.util.ArrayList;
@@ -23,7 +22,7 @@ public class GameView extends SurfaceView implements Runnable {
     private GameActivity activity;
 
     LightSensor lightSensor;
-    ProximitySensor proximitySensor;
+    Proximity proximitySensor;
     Magnometer magnometer;
     Accelerometer accelerometer;
 
@@ -60,7 +59,7 @@ public class GameView extends SurfaceView implements Runnable {
         prefs = activity.getSharedPreferences("game", Context.MODE_PRIVATE);
 
         lightSensor = new LightSensor(activity);
-        proximitySensor = new ProximitySensor(activity);
+        proximitySensor = new Proximity(activity);
         magnometer = new Magnometer(activity);
         accelerometer = new Accelerometer(activity);
 
@@ -154,15 +153,15 @@ public class GameView extends SurfaceView implements Runnable {
             if (background0.y < screenY) {
                 canvas.drawBitmap(background0.background_start, background0.x, background0.y, paint);
             }
-            canvas.drawBitmap(background1.background, background1.x, background1.y, paint);
-            canvas.drawBitmap(background2.background, background2.x, background2.y, paint);
+            canvas.drawBitmap(background1.background_dark, background1.x, background1.y, paint);
+            canvas.drawBitmap(background2.background_dark, background2.x, background2.y, paint);
         }
         else {
             if (background0.y < screenY) {
-                canvas.drawBitmap(background0.background_dark, background0.x, background0.y, paint);
+                canvas.drawBitmap(background0.background, background0.x, background0.y, paint);
             }
-            canvas.drawBitmap(background1.background_dark, background1.x, background1.y, paint);
-            canvas.drawBitmap(background2.background_dark, background2.x, background2.y, paint);
+            canvas.drawBitmap(background1.background, background1.x, background1.y, paint);
+            canvas.drawBitmap(background2.background, background2.x, background2.y, paint);
         }
     }
 
@@ -180,42 +179,15 @@ public class GameView extends SurfaceView implements Runnable {
             canvas.drawBitmap(coin.getCoin(), coin.x, coin.y, paint);
         }
 
-        canvas.drawText(score + "", screenX/2f, 164, paint);
-        canvas.drawText("" + magnometerValue, screenX/2f, 300, paint);
+        if (score < 10) canvas.drawText(score + "", screenX/2f, 256, paint);
+        else if (score < 100) canvas.drawText(score + "", screenX/2f - 64, 256, paint);
+        else if (score < 1000) canvas.drawText(score + "", screenX/2f - 128, 256, paint);
     }
 
     private void drawDiver(Canvas canvas, boolean isDead) {
         if (isDead) canvas.drawBitmap(diver.getDead(), diver.x, diver.y, paint);
         else canvas.drawBitmap(diver.getDiver(), diver.x, diver.y, paint);
     }
-
-    //old movement
-//    // to be changed with accelerometer
-//    @Override
-//    public boolean onTouchEvent(MotionEvent event) {
-//
-//        switch (event.getAction()) {
-//            case MotionEvent.ACTION_DOWN:
-//                if (event.getX() < screenX/2) {
-//                    diver.isGoingLeft = true;
-//                    diver.isGoingRight = false;
-//                } else if (event.getX() > screenX/2) {
-//                    diver.isGoingLeft = false;
-//                    diver.isGoingRight = true;
-//                    // to be changed with magnetometer
-//                    //diver.isShooting = true;
-//                }
-//                break;
-//            case MotionEvent.ACTION_UP:
-//                    diver.isGoingLeft = false;
-//                    diver.isGoingRight = false;
-//                    // to change
-//                    //diver.isShooting = false;
-//                    //
-//                break;
-//        }
-//        return true;
-//    }
 
     public void newBullet() {
         Bullet bullet = new Bullet(getResources());
@@ -259,11 +231,11 @@ public class GameView extends SurfaceView implements Runnable {
     private void manageDiver() {
 
         if (accelerometerValue < -0.2) {
-            diver.isGoingLeft = true;
-            diver.isGoingRight = false;
-        } else if (accelerometerValue > 0.2) {
             diver.isGoingLeft = false;
             diver.isGoingRight = true;
+        } else if (accelerometerValue > 0.2) {
+            diver.isGoingLeft = true;
+            diver.isGoingRight = false;
         } else {
             diver.isGoingLeft = false;
             diver.isGoingRight = false;

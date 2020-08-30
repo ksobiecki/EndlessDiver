@@ -61,12 +61,12 @@ public class GPS implements LocationListener {
 
                 return address;
             }
-            else return "wywalenie 1";
+            else return "location";
         }
         catch (IOException e) {
             e.printStackTrace();
         }
-        return "wywalenie 2";
+        return "location";
     }
 
     @Override
